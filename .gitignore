@@ -12,9 +12,9 @@
 *.lib
 
 # Executables
-*.exe
+[^class_scheduler].exe
 *.out
-class_scheduler
+# class_scheduler
 
 # Generated folders
 obj/
