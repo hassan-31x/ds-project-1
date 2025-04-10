@@ -794,8 +794,8 @@ void ScheduleUI::handleScheduleDrag()
         int newHour = (mousePos.y - TIME_HEADER_HEIGHT) / CELL_HEIGHT + 8;
 
         // Validate boundaries
-        newDay = std::clamp(newDay, 0, 4);
-        newHour = std::clamp(newHour, 8, 17);
+        newDay  = newDay < 0 ? 0 : (newDay > 4 ? 4 : newDay);
+        newHour = newHour < 8 ? 8 : (newHour > 17 ? 17 : newHour);
 
         if (draggedSection && !draggedSection->timeSlots.empty())
         {

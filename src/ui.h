@@ -7,7 +7,9 @@
 #include <string>
 #include <vector>
 
-#include "..\raylib\include\raylib.h"
+
+#include "..\raylib\include\raylib.h" // windows
+// #include "/usr/local/opt/raylib/include/raylib.h" // macos
 
 // UI Colors
 #define COLOR_BG         (Color){245, 245, 245, 255}
