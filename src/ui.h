@@ -29,8 +29,8 @@ const int TIME_HEADER_HEIGHT = 40;
 const int DAY_HEADER_WIDTH   = 120;
 const int PADDING            = 10;
 const int COURSE_LIST_WIDTH  = 300;
-const int FONT_SIZE          = 16;
-const int HEADER_FONT_SIZE   = 20;
+const int FONT_SIZE          = 20;
+const int HEADER_FONT_SIZE   = 24;
 
 // UI Components
 enum class Tab { COURSES, TEACHERS, SCHEDULE, PREFERENCES };

@@ -927,7 +927,7 @@
 //-------------------------------
 
 Button::Button(float x, float y, float width, float height,
-               const std::string& txt, Color col)
+               const std::string &txt, Color col)
     : rect{x, y, width, height},
       text(txt),
       color(col),
@@ -935,29 +935,36 @@ Button::Button(float x, float y, float width, float height,
       isToggled(false) {}
 
 // Check if button was clicked by user
-bool Button::isClicked() {
+bool Button::isClicked()
+{
     Vector2 mousePosition = GetMousePosition();
-    bool    mouseIsOver   = CheckCollisionPointRec(mousePosition, rect);
+    bool mouseIsOver = CheckCollisionPointRec(mousePosition, rect);
 
-    if (mouseIsOver && IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
-        if (isToggle) {
-            isToggled = !isToggled;  // Flip toggle state
+    if (mouseIsOver && IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
+    {
+        if (isToggle)
+        {
+            isToggled = !isToggled; // Flip toggle state
         }
-        return true;  // Click registered
+        return true; // Click registered
     }
-    return false;  // No click
+    return false; // No click
 }
 
 // Draw button on screen
-void Button::draw() {
+void Button::draw()
+{
     // Determine button colors based on state
-    Color bgColor   = color;
+    Color bgColor = color;
     Color textColor = COLOR_LIGHT_TEXT;
 
-    if (isToggle && isToggled) {
+    if (isToggle && isToggled)
+    {
         bgColor = COLOR_SECONDARY;
-    } else if (CheckCollisionPointRec(GetMousePosition(), rect)) {
-        bgColor = ColorBrightness(color, 0.2f);  // Lighten color on hover
+    }
+    else if (CheckCollisionPointRec(GetMousePosition(), rect))
+    {
+        bgColor = ColorBrightness(color, 0.2f); // Lighten color on hover
     }
 
     // Draw button background and border
@@ -980,7 +987,7 @@ void Button::draw() {
 //-------------------------------
 
 InputField::InputField(float x, float y, float width, float height,
-                       const std::string& lbl, int maxLen)
+                       const std::string &lbl, int maxLen)
     : rect{x, y, width, height},
       label(lbl),
       text(""),
@@ -988,41 +995,50 @@ InputField::InputField(float x, float y, float width, float height,
       maxLength(maxLen) {}
 
 // Handle text input and focus
-void InputField::update() {
+void InputField::update()
+{
     Vector2 mousePosition = GetMousePosition();
-    bool    clickedInside = CheckCollisionPointRec(mousePosition, rect) &&
+    bool clickedInside = CheckCollisionPointRec(mousePosition, rect) &&
                          IsMouseButtonReleased(MOUSE_LEFT_BUTTON);
 
     // Toggle active state based on clicks
-    if (clickedInside) {
+    if (clickedInside)
+    {
         isActive = true;
-    } else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
+    }
+    else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
+    {
         isActive = false;
     }
 
     // Process text input when active
-    if (isActive) {
+    if (isActive)
+    {
         // Add new characters
         int pressedKey = GetCharPressed();
-        if (pressedKey > 0 && text.length() < maxLength) {
+        if (pressedKey > 0 && text.length() < maxLength)
+        {
             text += static_cast<char>(pressedKey);
         }
 
         // Handle backspace
-        if (IsKeyPressed(KEY_BACKSPACE) && !text.empty()) {
+        if (IsKeyPressed(KEY_BACKSPACE) && !text.empty())
+        {
             text.pop_back();
         }
     }
 }
 
 // Draw input field and label
-void InputField::draw() {
+void InputField::draw()
+{
     // Determine colors based on state
-    Color bgColor     = isActive ? COLOR_HIGHLIGHT : COLOR_BG;
+    Color bgColor = isActive ? COLOR_HIGHLIGHT : COLOR_BG;
     Color borderColor = isActive ? COLOR_PRIMARY : COLOR_BORDER;
 
     // Highlight on hover when not active
-    if (!isActive && CheckCollisionPointRec(GetMousePosition(), rect)) {
+    if (!isActive && CheckCollisionPointRec(GetMousePosition(), rect))
+    {
         bgColor = ColorBrightness(COLOR_BG, 0.8f);
     }
 
@@ -1040,7 +1056,8 @@ void InputField::draw() {
                COLOR_TEXT);
 
     // Draw blinking cursor when active
-    if (isActive) {
+    if (isActive)
+    {
         float textWidth =
             MeasureTextEx(GetFontDefault(), text.c_str(), FONT_SIZE, 1).x;
         Vector2 cursorPos = {rect.x + 5 + textWidth, textPosition.y};
@@ -1055,7 +1072,7 @@ std::string InputField::getValue() const { return text; }
 //-------------------------------
 
 Dropdown::Dropdown(float x, float y, float width, float height,
-                   const std::string& lbl, const std::vector<std::string>& opts)
+                   const std::string &lbl, const std::vector<std::string> &opts)
     : rect{x, y, width, height},
       label(lbl),
       options(opts),
@@ -1063,26 +1080,34 @@ Dropdown::Dropdown(float x, float y, float width, float height,
       isOpen(false) {}
 
 // Handle dropdown selection
-void Dropdown::update() {
+void Dropdown::update()
+{
     Vector2 mousePosition = GetMousePosition();
 
     // Toggle dropdown visibility
-    if (CheckCollisionPointRec(mousePosition, rect)) {
-        if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
+    if (CheckCollisionPointRec(mousePosition, rect))
+    {
+        if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
+        {
             isOpen = !isOpen;
         }
-    } else if (isOpen) {
+    }
+    else if (isOpen)
+    {
         // Check option selection
         bool optionSelected = false;
-        for (int i = 0; i < options.size(); i++) {
+        for (int i = 0; i < options.size(); i++)
+        {
             Rectangle optionRect = {rect.x,
                                     rect.y + rect.height + i * FONT_SIZE * 1.5f,
                                     rect.width, FONT_SIZE * 1.5f};
 
-            if (CheckCollisionPointRec(mousePosition, optionRect)) {
-                if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
-                    selectedIndex  = i;
-                    isOpen         = false;
+            if (CheckCollisionPointRec(mousePosition, optionRect))
+            {
+                if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
+                {
+                    selectedIndex = i;
+                    isOpen = false;
                     optionSelected = true;
                     break;
                 }
@@ -1090,19 +1115,22 @@ void Dropdown::update() {
         }
 
         // Close dropdown if clicked outside
-        if (!optionSelected && IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
+        if (!optionSelected && IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
+        {
             isOpen = false;
         }
     }
 }
 
 // Draw dropdown and options
-void Dropdown::draw() {
+void Dropdown::draw()
+{
     // Determine colors based on state
-    Color bgColor     = COLOR_BG;
+    Color bgColor = COLOR_BG;
     Color borderColor = COLOR_BORDER;
 
-    if (CheckCollisionPointRec(GetMousePosition(), rect)) {
+    if (CheckCollisionPointRec(GetMousePosition(), rect))
+    {
         bgColor = ColorBrightness(COLOR_BG, 0.8f);
     }
 
@@ -1130,8 +1158,10 @@ void Dropdown::draw() {
                  COLOR_TEXT);
 
     // Display options when open
-    if (isOpen) {
-        for (int i = 0; i < options.size(); i++) {
+    if (isOpen)
+    {
+        for (int i = 0; i < options.size(); i++)
+        {
             Rectangle optionRect = {rect.x,
                                     rect.y + rect.height + i * FONT_SIZE * 1.5f,
                                     rect.width, FONT_SIZE * 1.5f};
@@ -1141,7 +1171,8 @@ void Dropdown::draw() {
             Color optionTextColor =
                 (i == selectedIndex) ? COLOR_LIGHT_TEXT : COLOR_TEXT;
 
-            if (CheckCollisionPointRec(GetMousePosition(), optionRect)) {
+            if (CheckCollisionPointRec(GetMousePosition(), optionRect))
+            {
                 optionBg = (i == selectedIndex)
                                ? ColorBrightness(COLOR_PRIMARY, 0.2f)
                                : COLOR_HIGHLIGHT;
@@ -1160,7 +1191,8 @@ void Dropdown::draw() {
 
 int Dropdown::getSelectedIndex() const { return selectedIndex; }
 
-std::string Dropdown::getSelectedOption() const {
+std::string Dropdown::getSelectedOption() const
+{
     return (selectedIndex >= 0 && selectedIndex < options.size())
                ? options[selectedIndex]
                : "";
@@ -1188,7 +1220,8 @@ ScheduleUI::ScheduleUI()
 
 ScheduleUI::~ScheduleUI() { scheduler.reset(); }
 
-void ScheduleUI::initialize() {
+void ScheduleUI::initialize()
+{
     // Set up tab buttons
     float tabWidth = SCREEN_WIDTH / 4.0f;
     tabButtons.push_back(Button(0, 0, tabWidth, 40, "Courses", COLOR_PRIMARY));
@@ -1200,7 +1233,7 @@ void ScheduleUI::initialize() {
         Button(tabWidth * 3, 0, tabWidth, 40, "Preferences", COLOR_PRIMARY));
 
     // Activate first tab
-    tabButtons[0].isToggle  = true;
+    tabButtons[0].isToggle = true;
     tabButtons[0].isToggled = true;
 
     // Create Generate Schedule button
@@ -1219,7 +1252,8 @@ void ScheduleUI::initialize() {
     loadDemoData();
 }
 
-void ScheduleUI::run() {
+void ScheduleUI::run()
+{
     // Initialize application window
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Class Scheduler");
     SetTargetFPS(60);
@@ -1227,7 +1261,8 @@ void ScheduleUI::run() {
     initialize();
 
     // Main application loop
-    while (!WindowShouldClose()) {
+    while (!WindowShouldClose())
+    {
         update();
 
         BeginDrawing();
@@ -1244,89 +1279,106 @@ void ScheduleUI::run() {
 void ScheduleUI::shutdown() { CloseWindow(); }
 
 // Update UI state each frame
-void ScheduleUI::update() {
+void ScheduleUI::update()
+{
     // Handle tab switching
-    for (size_t i = 0; i < tabButtons.size(); i++) {
-        if (tabButtons[i].isClicked()) {
+    for (size_t i = 0; i < tabButtons.size(); i++)
+    {
+        if (tabButtons[i].isClicked())
+        {
             currentTab = static_cast<Tab>(i);
             // Update button states
-            for (auto& button : tabButtons) button.isToggled = false;
+            for (auto &button : tabButtons)
+                button.isToggled = false;
             tabButtons[i].isToggled = true;
         }
     }
 
     // Check Generate Schedule button
-    if (actionButtons[0].isClicked()) {
+    if (actionButtons[0].isClicked())
+    {
         generateSchedule();
     }
 
     // Update current tab components
-    switch (currentTab) {
-        case Tab::COURSES:
-            for (auto& input : courseInputs) input.update();
-            if (addCourseButton.isClicked()) addCourse();
-            break;
+    switch (currentTab)
+    {
+    case Tab::COURSES:
+        for (auto &input : courseInputs)
+            input.update();
+        if (addCourseButton.isClicked())
+            addCourse();
+        break;
 
-        case Tab::TEACHERS:
-            for (auto& input : teacherInputs) input.update();
-            if (addTeacherButton.isClicked()) addTeacher();
-            break;
+    case Tab::TEACHERS:
+        for (auto &input : teacherInputs)
+            input.update();
+        if (addTeacherButton.isClicked())
+            addTeacher();
+        break;
 
-        case Tab::SCHEDULE:
-            handleScheduleDrag();
-            break;
+    case Tab::SCHEDULE:
+        handleScheduleDrag();
+        break;
 
-        case Tab::PREFERENCES:
-            preferenceTypeDropdown.update();
-            preferenceCourseDropdown.update();
-            preferenceTeacherDropdown.update();
-            if (addPreferenceButton.isClicked()) addPreference();
-            break;
+    case Tab::PREFERENCES:
+        preferenceTypeDropdown.update();
+        preferenceCourseDropdown.update();
+        preferenceTeacherDropdown.update();
+        if (addPreferenceButton.isClicked())
+            addPreference();
+        break;
     }
 
     // Update dropdown options
     std::vector<std::string> courseOptions;
-    for (const auto& course : scheduler->getCourses()) {
+    for (const auto &course : scheduler->getCourses())
+    {
         courseOptions.push_back(course->code + ": " + course->title);
     }
 
     std::vector<std::string> teacherOptions;
-    for (const auto& teacher : scheduler->getTeachers()) {
+    for (const auto &teacher : scheduler->getTeachers())
+    {
         teacherOptions.push_back(teacher->id + ": " + teacher->name);
     }
 
     // Refresh dropdown contents
-    courseDropdown.options            = courseOptions;
-    teacherDropdown.options           = teacherOptions;
-    preferenceCourseDropdown.options  = courseOptions;
+    courseDropdown.options = courseOptions;
+    teacherDropdown.options = teacherOptions;
+    preferenceCourseDropdown.options = courseOptions;
     preferenceTeacherDropdown.options = teacherOptions;
 }
 
 // Draw entire UI
-void ScheduleUI::draw() {
+void ScheduleUI::draw()
+{
     // Draw tab buttons
-    for (auto& button : tabButtons) {
+    for (auto &button : tabButtons)
+    {
         button.draw();
     }
 
     // Draw current tab content
-    switch (currentTab) {
-        case Tab::COURSES:
-            drawCoursesTab();
-            break;
-        case Tab::TEACHERS:
-            drawTeachersTab();
-            break;
-        case Tab::SCHEDULE:
-            drawScheduleTab();
-            break;
-        case Tab::PREFERENCES:
-            drawPreferencesTab();
-            break;
+    switch (currentTab)
+    {
+    case Tab::COURSES:
+        drawCoursesTab();
+        break;
+    case Tab::TEACHERS:
+        drawTeachersTab();
+        break;
+    case Tab::SCHEDULE:
+        drawScheduleTab();
+        break;
+    case Tab::PREFERENCES:
+        drawPreferencesTab();
+        break;
     }
 
     // Draw action buttons
-    for (auto& button : actionButtons) {
+    for (auto &button : actionButtons)
+    {
         button.draw();
     }
 }
@@ -1335,13 +1387,15 @@ void ScheduleUI::draw() {
 // ScheduleUI Tab Implementations
 //-------------------------------
 
-void ScheduleUI::drawCoursesTab() {
+void ScheduleUI::drawCoursesTab()
+{
     // Draw title
     DrawTextEx(GetFontDefault(), "Courses", {PADDING, 50}, HEADER_FONT_SIZE, 1,
                COLOR_TEXT);
 
     // Draw input fields
-    for (auto& input : courseInputs) {
+    for (auto &input : courseInputs)
+    {
         input.draw();
     }
 
@@ -1352,7 +1406,8 @@ void ScheduleUI::drawCoursesTab() {
     DrawTextEx(GetFontDefault(), "Existing Courses:", {PADDING, 350}, FONT_SIZE,
                1, COLOR_TEXT);
     int yPos = 380;
-    for (const auto& course : scheduler->getCourses()) {
+    for (const auto &course : scheduler->getCourses())
+    {
         std::string courseInfo = course->code + ": " + course->title + " (" +
                                  std::to_string(course->creditHours) +
                                  " credits)";
@@ -1362,13 +1417,15 @@ void ScheduleUI::drawCoursesTab() {
     }
 }
 
-void ScheduleUI::drawTeachersTab() {
+void ScheduleUI::drawTeachersTab()
+{
     // Draw title
     DrawTextEx(GetFontDefault(), "Teachers", {PADDING, 50}, HEADER_FONT_SIZE, 1,
                COLOR_TEXT);
 
     // Draw input fields
-    for (auto& input : teacherInputs) {
+    for (auto &input : teacherInputs)
+    {
         input.draw();
     }
 
@@ -1379,7 +1436,8 @@ void ScheduleUI::drawTeachersTab() {
     DrawTextEx(GetFontDefault(), "Existing Teachers:", {PADDING, 350},
                FONT_SIZE, 1, COLOR_TEXT);
     int yPos = 380;
-    for (const auto& teacher : scheduler->getTeachers()) {
+    for (const auto &teacher : scheduler->getTeachers())
+    {
         std::string teacherInfo = teacher->id + ": " + teacher->name;
         DrawTextEx(GetFontDefault(), teacherInfo.c_str(),
                    {PADDING, (float)yPos}, FONT_SIZE, 1, COLOR_TEXT);
@@ -1387,7 +1445,8 @@ void ScheduleUI::drawTeachersTab() {
     }
 }
 
-void ScheduleUI::drawScheduleTab() {
+void ScheduleUI::drawScheduleTab()
+{
     // Draw title
     DrawTextEx(GetFontDefault(), "Class Schedule", {PADDING, 50},
                HEADER_FONT_SIZE, 1, COLOR_TEXT);
@@ -1397,7 +1456,8 @@ void ScheduleUI::drawScheduleTab() {
     drawScheduleItems();
 }
 
-void ScheduleUI::drawPreferencesTab() {
+void ScheduleUI::drawPreferencesTab()
+{
     // Draw title
     DrawTextEx(GetFontDefault(), "Preferences", {PADDING, 50}, HEADER_FONT_SIZE,
                1, COLOR_TEXT);
@@ -1408,13 +1468,17 @@ void ScheduleUI::drawPreferencesTab() {
 
     // Show relevant components based on preference type
     if (preferenceTypeDropdown.getSelectedIndex() == 0 ||
-        preferenceTypeDropdown.getSelectedIndex() == 2) {
+        preferenceTypeDropdown.getSelectedIndex() == 2)
+    {
         preferenceTeacherDropdown.draw();
-    } else {
+    }
+    else
+    {
         // Draw time slot buttons
         DrawTextEx(GetFontDefault(), "Select Time Slot:", {PADDING, 270},
                    FONT_SIZE, 1, COLOR_TEXT);
-        for (auto& button : preferenceTimeButtons) {
+        for (auto &button : preferenceTimeButtons)
+        {
             button.draw();
         }
     }
@@ -1427,11 +1491,13 @@ void ScheduleUI::drawPreferencesTab() {
 // Schedule Drawing Functions
 //-------------------------------
 
-void ScheduleUI::drawScheduleGrid() {
+void ScheduleUI::drawScheduleGrid()
+{
     // Draw time column headers
-    for (int hour = 8; hour <= 17; hour++) {
+    for (int hour = 8; hour <= 17; hour++)
+    {
         std::string timeLabel = std::to_string(hour) + ":00";
-        float       yPos      = TIME_HEADER_HEIGHT + (hour - 8) * CELL_HEIGHT;
+        float yPos = TIME_HEADER_HEIGHT + (hour - 8) * CELL_HEIGHT;
 
         DrawRectangle(0, yPos, DAY_HEADER_WIDTH, CELL_HEIGHT, COLOR_HIGHLIGHT);
         DrawRectangleLines(0, yPos, DAY_HEADER_WIDTH, CELL_HEIGHT,
@@ -1447,10 +1513,10 @@ void ScheduleUI::drawScheduleGrid() {
     }
 
     // Draw day row headers
-    const char* days[]   = {"Monday", "Tuesday", "Wednesday", "Thursday",
-                            "Friday"};
-    float       dayWidth = (SCREEN_WIDTH - DAY_HEADER_WIDTH) / 5;
-    for (int day = 0; day < 5; day++) {
+    const char *days[] = {"Mon", "Tue", "Wed", "Thu", "Fri"};
+    float dayWidth = (SCREEN_WIDTH - DAY_HEADER_WIDTH) / 5;
+    for (int day = 0; day < 5; day++)
+    {
         float xPos = DAY_HEADER_WIDTH + day * dayWidth;
 
         DrawRectangle(xPos, 0, dayWidth, TIME_HEADER_HEIGHT, COLOR_HIGHLIGHT);
@@ -1466,8 +1532,10 @@ void ScheduleUI::drawScheduleGrid() {
     }
 
     // Draw grid lines
-    for (int day = 0; day < 5; day++) {
-        for (int hour = 8; hour <= 17; hour++) {
+    for (int day = 0; day < 5; day++)
+    {
+        for (int hour = 8; hour <= 17; hour++)
+        {
             float xPos = DAY_HEADER_WIDTH + day * dayWidth;
             float yPos = TIME_HEADER_HEIGHT + (hour - 8) * CELL_HEIGHT;
             DrawRectangleLines(xPos, yPos, dayWidth, CELL_HEIGHT, COLOR_BORDER);
@@ -1475,17 +1543,21 @@ void ScheduleUI::drawScheduleGrid() {
     }
 }
 
-void ScheduleUI::drawScheduleItems() {
+void ScheduleUI::drawScheduleItems()
+{
     float dayWidth = (SCREEN_WIDTH - DAY_HEADER_WIDTH) / 5;
 
     // Draw all scheduled sections
-    for (const auto& section : scheduler->getSections()) {
-        if (!section->teacher || section->timeSlots.empty()) continue;
+    for (const auto &section : scheduler->getSections())
+    {
+        if (!section->teacher || section->timeSlots.empty())
+            continue;
 
         // Draw each time slot for the section
-        for (const auto& slot : section->timeSlots) {
-            float xPos   = DAY_HEADER_WIDTH + slot.day * dayWidth;
-            float yPos   = TIME_HEADER_HEIGHT + (slot.hour - 8) * CELL_HEIGHT;
+        for (const auto &slot : section->timeSlots)
+        {
+            float xPos = DAY_HEADER_WIDTH + slot.day * dayWidth;
+            float yPos = TIME_HEADER_HEIGHT + (slot.hour - 8) * CELL_HEIGHT;
             float height = slot.duration * CELL_HEIGHT;
 
             // Draw section block
@@ -1508,21 +1580,26 @@ void ScheduleUI::drawScheduleItems() {
 // Core Functionality Implementations
 //-------------------------------
 
-void ScheduleUI::addTeacher() {
-    if (teacherInputs.size() < 2) return;
+void ScheduleUI::addTeacher()
+{
+    if (teacherInputs.size() < 2)
+        return;
 
-    std::string teacherID   = teacherInputs[0].getValue();
+    std::string teacherID = teacherInputs[0].getValue();
     std::string teacherName = teacherInputs[1].getValue();
 
-    if (!teacherID.empty() && !teacherName.empty()) {
+    if (!teacherID.empty() && !teacherName.empty())
+    {
         auto newTeacher = std::make_shared<Teacher>(teacherID, teacherName);
 
         // Set default availability (Mon-Fri 8am-5pm)
-        for (int day = 0; day < 5; day++) {
-            for (int hour = 8; hour <= 16; hour++) {
+        for (int day = 0; day < 5; day++)
+        {
+            for (int hour = 8; hour <= 16; hour++)
+            {
                 TimeSlot slot;
-                slot.day      = day;
-                slot.hour     = hour;
+                slot.day = day;
+                slot.hour = hour;
                 slot.duration = 1;
                 newTeacher->addAvailableTimeSlot(slot);
             }
@@ -1530,24 +1607,28 @@ void ScheduleUI::addTeacher() {
 
         scheduler->addTeacher(newTeacher);
         // Clear input fields
-        for (auto& input : teacherInputs) input.text.clear();
+        for (auto &input : teacherInputs)
+            input.text.clear();
     }
 }
 
-void ScheduleUI::addSection() {
-    std::string sectionID    = sectionInputs[0].getValue();
-    int         courseIndex  = courseDropdown.getSelectedIndex();
-    int         teacherIndex = teacherDropdown.getSelectedIndex();
+void ScheduleUI::addSection()
+{
+    std::string sectionID = sectionInputs[0].getValue();
+    int courseIndex = courseDropdown.getSelectedIndex();
+    int teacherIndex = teacherDropdown.getSelectedIndex();
 
-    if (sectionID.empty() || courseIndex < 0 || teacherIndex < 0) return;
+    if (sectionID.empty() || courseIndex < 0 || teacherIndex < 0)
+        return;
 
-    auto selectedCourse  = scheduler->getCourses()[courseIndex];
+    auto selectedCourse = scheduler->getCourses()[courseIndex];
     auto selectedTeacher = scheduler->getTeachers()[teacherIndex];
 
     // Ensure teacher is assigned to course
     if (std::find(selectedCourse->assignedTeachers.begin(),
                   selectedCourse->assignedTeachers.end(),
-                  selectedTeacher) == selectedCourse->assignedTeachers.end()) {
+                  selectedTeacher) == selectedCourse->assignedTeachers.end())
+    {
         selectedCourse->assignTeacher(selectedTeacher);
     }
 
@@ -1560,120 +1641,146 @@ void ScheduleUI::addSection() {
     sectionInputs[0].text.clear();
 }
 
-void ScheduleUI::addPreference() {
-    int prefType    = preferenceTypeDropdown.getSelectedIndex();
+void ScheduleUI::addPreference()
+{
+    int prefType = preferenceTypeDropdown.getSelectedIndex();
     int courseIndex = preferenceCourseDropdown.getSelectedIndex();
 
-    if (courseIndex < 0) return;
+    if (courseIndex < 0)
+        return;
 
     StudentPreference newPref;
     newPref.courseCode = scheduler->getCourses()[courseIndex]->code;
 
-    switch (prefType) {
-        case 0:  // Prefer Teacher
-        case 2:  // Avoid Teacher
+    switch (prefType)
+    {
+    case 0: // Prefer Teacher
+    case 2: // Avoid Teacher
+    {
+        int teacherIndex = preferenceTeacherDropdown.getSelectedIndex();
+        if (teacherIndex >= 0)
         {
-            int teacherIndex = preferenceTeacherDropdown.getSelectedIndex();
-            if (teacherIndex >= 0) {
-                newPref.type =
-                    static_cast<StudentPreference::PreferenceType>(prefType);
-                newPref.teacherId = scheduler->getTeachers()[teacherIndex]->id;
-                scheduler->addPreference(newPref);
-            }
-        } break;
+            newPref.type =
+                static_cast<StudentPreference::PreferenceType>(prefType);
+            newPref.teacherId = scheduler->getTeachers()[teacherIndex]->id;
+            scheduler->addPreference(newPref);
+        }
+    }
+    break;
 
-        case 1:  // Prefer Time
-        case 3:  // Avoid Time
+    case 1: // Prefer Time
+    case 3: // Avoid Time
+    {
+        for (size_t i = 0; i < preferenceTimeButtons.size(); i++)
         {
-            for (size_t i = 0; i < preferenceTimeButtons.size(); i++) {
-                if (preferenceTimeButtons[i].isToggled) {
-                    newPref.type =
-                        static_cast<StudentPreference::PreferenceType>(
-                            prefType);
-                    newPref.timeSlot.day      = i / 10;
-                    newPref.timeSlot.hour     = (i % 10) + 8;
-                    newPref.timeSlot.duration = 1;
-                    scheduler->addPreference(newPref);
-                    preferenceTimeButtons[i].isToggled = false;
-                }
+            if (preferenceTimeButtons[i].isToggled)
+            {
+                newPref.type =
+                    static_cast<StudentPreference::PreferenceType>(
+                        prefType);
+                newPref.timeSlot.day = i / 10;
+                newPref.timeSlot.hour = (i % 10) + 8;
+                newPref.timeSlot.duration = 1;
+                scheduler->addPreference(newPref);
+                preferenceTimeButtons[i].isToggled = false;
             }
-        } break;
+        }
+    }
+    break;
     }
 }
 
-void ScheduleUI::generateSchedule() {
+void ScheduleUI::generateSchedule()
+{
     bool success = scheduler->generateSchedule();
 
-    if (success) {
+    if (success)
+    {
         // Switch to schedule tab
         currentTab = Tab::SCHEDULE;
-        for (auto& button : tabButtons) button.isToggled = false;
+        for (auto &button : tabButtons)
+            button.isToggled = false;
         tabButtons[static_cast<int>(Tab::SCHEDULE)].isToggled = true;
     }
 }
 
-void ScheduleUI::handleScheduleDrag() {
+void ScheduleUI::handleScheduleDrag()
+{
     float dayWidth = (SCREEN_WIDTH - DAY_HEADER_WIDTH) / 5;
 
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    {
         Vector2 mousePos = GetMousePosition();
 
         // Check if clicking a schedule block
-        for (const auto& section : scheduler->getSections()) {
-            for (const auto& slot : section->timeSlots) {
+        for (const auto &section : scheduler->getSections())
+        {
+            for (const auto &slot : section->timeSlots)
+            {
                 float xPos = DAY_HEADER_WIDTH + slot.day * dayWidth;
                 float yPos = TIME_HEADER_HEIGHT + (slot.hour - 8) * CELL_HEIGHT;
                 Rectangle slotRect = {
                     xPos, yPos, dayWidth,
                     CELL_HEIGHT * static_cast<float>(slot.duration)};
 
-                if (CheckCollisionPointRec(mousePos, slotRect)) {
-                    isDragging     = true;
+                if (CheckCollisionPointRec(mousePos, slotRect))
+                {
+                    isDragging = true;
                     draggedSection = section;
-                    dragOffset     = {mousePos.x - xPos, mousePos.y - yPos};
+                    dragOffset = {mousePos.x - xPos, mousePos.y - yPos};
                     return;
                 }
             }
         }
-    } else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON) && isDragging) {
+    }
+    else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON) && isDragging)
+    {
         // Update section position
         Vector2 mousePos = GetMousePosition();
-        int     newDay   = (mousePos.x - DAY_HEADER_WIDTH) / dayWidth;
-        int     newHour  = (mousePos.y - TIME_HEADER_HEIGHT) / CELL_HEIGHT + 8;
+        int newDay = (mousePos.x - DAY_HEADER_WIDTH) / dayWidth;
+        int newHour = (mousePos.y - TIME_HEADER_HEIGHT) / CELL_HEIGHT + 8;
 
         // Validate boundaries
-        newDay  = std::clamp(newDay, 0, 4);
+        newDay = std::clamp(newDay, 0, 4);
         newHour = std::clamp(newHour, 8, 17);
 
-        if (draggedSection && !draggedSection->timeSlots.empty()) {
+        if (draggedSection && !draggedSection->timeSlots.empty())
+        {
             // Update first time slot (simplified example)
-            draggedSection->timeSlots[0].day  = newDay;
+            draggedSection->timeSlots[0].day = newDay;
             draggedSection->timeSlots[0].hour = newHour;
         }
 
-        isDragging     = false;
+        isDragging = false;
         draggedSection = nullptr;
     }
 }
 
-void ScheduleUI::addCourse() {
-    if (courseInputs.size() >= 3) {
-        std::string code    = courseInputs[0].getValue();
-        std::string title   = courseInputs[1].getValue();
-        int         credits = 3;  // Default
+void ScheduleUI::addCourse()
+{
+    if (courseInputs.size() >= 3)
+    {
+        std::string code = courseInputs[0].getValue();
+        std::string title = courseInputs[1].getValue();
+        int credits = 3; // Default
 
-        try {
+        try
+        {
             credits = std::stoi(courseInputs[2].getValue());
-        } catch (...) {
+        }
+        catch (...)
+        {
             // Use default value if parsing fails
         }
 
-        if (!code.empty() && !title.empty()) {
+        if (!code.empty() && !title.empty())
+        {
             auto course = std::make_shared<Course>(code, title, credits);
             scheduler->addCourse(course);
 
             // Clear inputs
-            for (auto& input : courseInputs) {
+            for (auto &input : courseInputs)
+            {
                 input.text.clear();
             }
         }
@@ -1684,9 +1791,10 @@ void ScheduleUI::addCourse() {
 // Demo Data Initialization
 //-------------------------------
 
-void ScheduleUI::loadDemoData() {
+void ScheduleUI::loadDemoData()
+{
     // Sample courses
-    auto cs101   = std::make_shared<Course>("CS101", "Intro to Programming", 3);
+    auto cs101 = std::make_shared<Course>("CS101", "Intro to Programming", 3);
     auto math201 = std::make_shared<Course>("MATH201", "Calculus II", 4);
     scheduler->addCourse(cs101);
     scheduler->addCourse(math201);
@@ -1696,11 +1804,13 @@ void ScheduleUI::loadDemoData() {
     auto teacher2 = std::make_shared<Teacher>("T2", "Prof. Johnson");
 
     // Set available times
-    for (int day = 0; day < 5; day++) {
-        for (int hour = 8; hour <= 16; hour++) {
+    for (int day = 0; day < 5; day++)
+    {
+        for (int hour = 8; hour <= 16; hour++)
+        {
             TimeSlot slot;
-            slot.day      = day;
-            slot.hour     = hour;
+            slot.day = day;
+            slot.hour = hour;
             slot.duration = 1;
             teacher1->addAvailableTimeSlot(slot);
             teacher2->addAvailableTimeSlot(slot);

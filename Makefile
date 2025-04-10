@@ -1,7 +1,7 @@
 .PHONY: all clean
 
 PROJECT_NAME       ?= class_scheduler
-RAYLIB_VERSION     ?= 4.2.0
+RAYLIB_VERSION     ?= 5.5.0
 RAYLIB_PATH        ?= $(HOME)/raylib
 COMPILER_PATH      ?= C:/raylib/w64devkit/bin
 PLATFORM           ?= PLATFORM_DESKTOP
