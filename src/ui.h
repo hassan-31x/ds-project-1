@@ -85,6 +85,7 @@ struct Dropdown {
              const std::string& lbl, const std::vector<std::string>& opts);
     void        update();
     void        draw();
+    void        drawOptions();
     int         getSelectedIndex() const;
     std::string getSelectedOption() const;
 };

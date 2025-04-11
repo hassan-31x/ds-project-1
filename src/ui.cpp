@@ -156,9 +156,17 @@ void Dropdown::draw() {
                 {rect.x + rect.width - 5, rect.y + rect.height / 3},
                 {rect.x + rect.width - 10, rect.y + 2 * rect.height / 3},
                 COLOR_TEXT);
-    
+}
+
+// Draw options in a separate method that will be called at the end of the main draw function
+// to ensure it appears on top of all other content
+void Dropdown::drawOptions() {
     // Draw options if open
-    if (isOpen) {
+    if (isOpen && !options.empty()) {
+        // Draw a white background behind all options to cover any content underneath
+        float totalHeight = options.size() * FONT_SIZE * 1.5f;
+        DrawRectangle(rect.x, rect.y + rect.height, rect.width, totalHeight, WHITE);
+        
         for (int i = 0; i < options.size(); i++) {
             Rectangle optionRect = {rect.x, rect.y + rect.height + i * FONT_SIZE * 1.5f, rect.width, FONT_SIZE * 1.5f};
             Color optBgColor = (i == selectedIndex) ? COLOR_PRIMARY : COLOR_BG;
@@ -444,6 +452,19 @@ void ScheduleUI::draw() {
     for (auto& button : actionButtons) {
         button.draw();
     }
+    
+    // Draw all dropdown options at the very end to ensure they appear on top
+    switch (currentTab) {
+        case Tab::SECTIONS:
+            courseDropdown.drawOptions();
+            teacherDropdown.drawOptions();
+            break;
+        case Tab::PREFERENCES:
+            preferenceTypeDropdown.drawOptions();
+            preferenceCourseDropdown.drawOptions();
+            preferenceTeacherDropdown.drawOptions();
+            break;
+    }
 }
 
 void ScheduleUI::drawCoursesTab() {
@@ -505,7 +526,7 @@ void ScheduleUI::drawSectionsTab() {
         input.draw();
     }
     
-    // Draw dropdowns
+    // Draw dropdowns (but not their options - those are drawn at the end)
     courseDropdown.draw();
     teacherDropdown.draw();
     
@@ -543,7 +564,7 @@ void ScheduleUI::drawPreferencesTab() {
     // Draw heading
     DrawTextEx(GetFontDefault(), "Preferences", {PADDING, 50}, HEADER_FONT_SIZE, 1, COLOR_TEXT);
     
-    // Draw preference components
+    // Draw preference components (but not their options - those are drawn at the end)
     preferenceTypeDropdown.draw();
     preferenceCourseDropdown.draw();
     
@@ -622,16 +643,44 @@ void ScheduleUI::drawScheduleItems() {
             float y = TIME_HEADER_HEIGHT + (slot.hour - 8) * CELL_HEIGHT;
             float height = slot.duration * CELL_HEIGHT;
             
+            // Calculate available space
+            float availableWidth = dayWidth - 10; // 5px padding on each side
+            float availableHeight = height - 10;  // 5px padding on top and bottom
+            
             // Draw section block
             DrawRectangle(x + 1, y + 1, dayWidth - 2, height - 2, COLOR_PRIMARY);
             
-            // Draw section text
+            // Prepare text content with appropriate sizing
             std::stringstream ss;
-            ss << section->course->code << " (" << section->id << ")\n";
-            ss << section->teacher->name << "\n";
-            ss << slot.toString();
+            ss << section->course->code << " (" << section->id << ")";
+            std::string teacherName = section->teacher->name;
+            std::string timeInfo = slot.toString();
             
-            DrawTextEx(GetFontDefault(), ss.str().c_str(), {x + 5, y + 5}, FONT_SIZE, 1, COLOR_LIGHT_TEXT);
+            // Truncate teacher name if too long
+            if (MeasureTextEx(GetFontDefault(), teacherName.c_str(), FONT_SIZE, 1).x > availableWidth) {
+                int charsToShow = 0;
+                while (charsToShow < teacherName.length()) {
+                    std::string truncated = teacherName.substr(0, charsToShow) + "...";
+                    if (MeasureTextEx(GetFontDefault(), truncated.c_str(), FONT_SIZE, 1).x > availableWidth) {
+                        break;
+                    }
+                    charsToShow++;
+                }
+                teacherName = teacherName.substr(0, charsToShow-1) + "...";
+            }
+            
+            // Choose font size based on available height
+            int fontSize = FONT_SIZE;
+            if (availableHeight < 3 * FONT_SIZE) {
+                // If cell is too small for 3 lines, reduce font size
+                fontSize = (int)(availableHeight / 3.5f);
+                if (fontSize < 10) fontSize = 10; // Minimum font size
+            }
+            
+            // Draw text with adjusted positioning and size
+            DrawTextEx(GetFontDefault(), ss.str().c_str(), {x + 5, y + 5}, fontSize, 1, COLOR_LIGHT_TEXT);
+            DrawTextEx(GetFontDefault(), teacherName.c_str(), {x + 5, y + 5 + fontSize + 2}, fontSize, 1, COLOR_LIGHT_TEXT);
+            DrawTextEx(GetFontDefault(), timeInfo.c_str(), {x + 5, y + 5 + 2 * (fontSize + 2)}, fontSize, 1, COLOR_LIGHT_TEXT);
         }
     }
 }
