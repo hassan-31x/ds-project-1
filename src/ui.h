@@ -10,6 +10,7 @@
 
 #include "..\raylib\include\raylib.h" // windows
 // #include "/usr/local/opt/raylib/include/raylib.h" // macos
+// #include "/opt/homebrew/include/raylib.h" // macos
 
 // UI Colors
 #define COLOR_BG         (Color){245, 245, 245, 255}
@@ -35,7 +36,13 @@ const int FONT_SIZE          = 20;
 const int HEADER_FONT_SIZE   = 24;
 
 // UI Components
-enum class Tab { COURSES, TEACHERS, SCHEDULE, PREFERENCES };
+enum class Tab {
+    COURSES,
+    TEACHERS,
+    SECTIONS,
+    SCHEDULE,
+    PREFERENCES
+};
 
 // Button structure
 struct Button {
@@ -127,6 +134,7 @@ private:
     // Helper Methods
     void drawCoursesTab();
     void drawTeachersTab();
+    void drawSectionsTab();
     void drawScheduleTab();
     void drawPreferencesTab();
 

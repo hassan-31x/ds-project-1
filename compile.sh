@@ -10,8 +10,8 @@ rm -f obj/*.o
 # Detect OS for proper library paths
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # macOS - use Homebrew paths
-    RAYLIB_INCLUDE_PATH="/usr/local/opt/raylib/include"
-    RAYLIB_LIB_PATH="/usr/local/opt/raylib/lib"
+    RAYLIB_INCLUDE_PATH="/opt/homebrew/include"
+    RAYLIB_LIB_PATH="/opt/homebrew/lib"
     
     # Compile all source files
     for file in src/*.cpp; do

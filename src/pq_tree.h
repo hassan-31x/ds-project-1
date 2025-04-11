@@ -6,6 +6,7 @@
 #include <memory>
 #include <algorithm>
 #include <set>
+#include <map>
 
 // Node types in PQ-Tree
 enum class NodeType {
@@ -22,6 +23,13 @@ class PQTree {
 private:
     std::shared_ptr<PQNode> root;
     std::unordered_map<std::string, std::shared_ptr<PQNode>> leaves;
+    
+    // Helper method for reduce operation
+    bool reduceNode(std::shared_ptr<PQNode> node, const std::set<std::string>& targetSet, 
+                   std::map<std::shared_ptr<PQNode>, bool>& markedMap);
+                   
+    // Helper methods for permutation generation
+    std::vector<std::vector<std::string>> generateNodePermutations(std::shared_ptr<PQNode> node);
 
 public:
     PQTree();
