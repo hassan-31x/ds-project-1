@@ -1,420 +1,189 @@
-#include "scheduler.h"
-#include <sstream>
-#include <iostream>
+#include "Scheduler.hpp"
 #include <algorithm>
+#include <map>
+#include <set>
 #include <random>
 
-std::string TimeSlot::toString() const
-{
-    std::stringstream timeStream;
-    timeStream << dayToString(day) << " "
-               << hour << ":00-" << (hour + duration) << ":00";
-    return timeStream.str();
+Scheduler::Scheduler() {
+    clear();
 }
 
-bool TimeSlot::overlaps(const TimeSlot &otherSlot) const
-{
-    if (day != otherSlot.day)
-        return false;
-    const int currentEnd = hour + duration;
-    const int comparisonEnd = otherSlot.hour + otherSlot.duration;
-    return (hour < comparisonEnd && otherSlot.hour < currentEnd);
-}
-
-std::string TimeSlot::dayToString(int weekday)
-{
-    switch (weekday)
-    {
-    case 0:
-        return "Monday";
-    case 1:
-        return "Tuesday";
-    case 2:
-        return "Wednesday";
-    case 3:
-        return "Thursday";
-    case 4:
-        return "Friday";
-    default:
-        return "Unknown";
+void Scheduler::addCourse(std::shared_ptr<Course> course) {
+    if (std::find(courses.begin(), courses.end(), course) == courses.end()) {
+        courses.push_back(course);
     }
 }
 
-Teacher::Teacher(const std::string &teacherID, const std::string &teacherName)
-    : id(teacherID), name(teacherName) {}
-
-void Teacher::addAvailableTimeSlot(const TimeSlot &newSlot)
-{
-    availableTimeSlots.push_back(newSlot);
+void Scheduler::addTeacher(std::shared_ptr<Teacher> teacher) {
+    if (std::find(teachers.begin(), teachers.end(), teacher) == teachers.end()) {
+        teachers.push_back(teacher);
+    }
 }
 
-Course::Course(const std::string &courseCode,
-               const std::string &courseTitle,
-               int creditCount)
-    : code(courseCode), title(courseTitle), creditHours(creditCount) {}
-
-void Course::assignTeacher(std::shared_ptr<Teacher> instructor)
-{
-    assignedTeachers.push_back(instructor);
+void Scheduler::addSection(std::shared_ptr<Section> section) {
+    if (std::find(sections.begin(), sections.end(), section) == sections.end()) {
+        sections.push_back(section);
+        
+        // Add the section to its course
+        section->getCourse()->addSection(section);
+        
+        // Add the course to the teacher's list of courses
+        section->getTeacher()->addCourse(section->getCourse());
+    }
 }
 
-Section::Section(const std::string &sectionID,
-                 std::shared_ptr<Course> courseData)
-    : id(sectionID), course(courseData), teacher(nullptr) {}
-
-void Section::assignTeacher(std::shared_ptr<Teacher> instructor)
-{
-    teacher = instructor;
+void Scheduler::addRequirement(std::shared_ptr<Requirement> requirement) {
+    if (std::find(requirements.begin(), requirements.end(), requirement) == requirements.end()) {
+        requirements.push_back(requirement);
+    }
 }
 
-void Section::addTimeSlot(const TimeSlot &newSlot)
-{
-    timeSlots.push_back(newSlot);
+bool Scheduler::generateSchedule() {
+    // Clear any existing schedules
+    possibleSchedules.clear();
+    currentSchedule = nullptr;
+    
+    // Build the PQ tree from the course and section data
+    buildPQTree();
+    
+    // Apply the PQ tree operations to generate schedules
+    extractSchedulesFromPQTree();
+    
+    // Find a schedule that satisfies all requirements
+    return findSatisfyingSchedule();
 }
 
-ClassScheduler::ClassScheduler() {}
+std::shared_ptr<Schedule> Scheduler::getCurrentSchedule() const {
+    return currentSchedule;
+}
 
-ClassScheduler::~ClassScheduler()
-{
+std::vector<std::shared_ptr<Schedule>> Scheduler::getAllPossibleSchedules() const {
+    return possibleSchedules;
+}
+
+void Scheduler::clear() {
     courses.clear();
     teachers.clear();
     sections.clear();
+    requirements.clear();
+    possibleSchedules.clear();
+    currentSchedule = nullptr;
 }
 
-void ClassScheduler::addCourse(std::shared_ptr<Course> newCourse)
-{
-    courses.push_back(newCourse);
-}
-
-void ClassScheduler::addTeacher(std::shared_ptr<Teacher> newInstructor)
-{
-    teachers.push_back(newInstructor);
-}
-
-void ClassScheduler::addSection(std::shared_ptr<Section> newSection)
-{
-    sections.push_back(newSection);
-}
-
-void ClassScheduler::addPreference(const StudentPreference &newPreference)
-{
-    preferences.push_back(newPreference);
-}
-
-const std::vector<std::shared_ptr<Course>> &ClassScheduler::getCourses() const
-{
+const std::vector<std::shared_ptr<Course>>& Scheduler::getCourses() const {
     return courses;
 }
 
-const std::vector<std::shared_ptr<Teacher>> &ClassScheduler::getTeachers() const
-{
+const std::vector<std::shared_ptr<Teacher>>& Scheduler::getTeachers() const {
     return teachers;
 }
 
-const std::vector<std::shared_ptr<Section>> &ClassScheduler::getSections() const
-{
+const std::vector<std::shared_ptr<Section>>& Scheduler::getSections() const {
     return sections;
 }
 
-bool ClassScheduler::generateSchedule()
-{
-    for (auto &section : sections)
-    {
-        section->teacher = nullptr;
-        section->timeSlots.clear();
-    }
+const std::vector<std::shared_ptr<Requirement>>& Scheduler::getRequirements() const {
+    return requirements;
+}
 
-    std::vector<TimeSlot> allTimeSlots;
-    for (int day = 0; day < 5; day++)
-    {
-        for (int hour = 8; hour <= 16; hour++)
-        {
-            allTimeSlots.push_back({day, hour, 1});
+// Helper method to convert courses and sections to a PQ tree representation
+void Scheduler::buildPQTree() {
+    // Create a new PQ tree
+    pqTree = PQTree();
+    
+    // Create a root P-node for the entire schedule
+    auto rootNode = pqTree.createPNode("Schedule");
+    pqTree.setRoot(rootNode);
+    
+    // Create P-nodes for each course
+    for (const auto& course : courses) {
+        auto courseNode = pqTree.createPNode(course->getCode());
+        rootNode->addChild(courseNode);
+        
+        // For each course, create Q-nodes for sections
+        // These are represented as a Q-node because we can only reverse the sections, not reorder them arbitrarily
+        auto sectionsNode = pqTree.createQNode("Sections_" + course->getCode());
+        courseNode->addChild(sectionsNode);
+        
+        // Add leaf nodes for each section
+        for (const auto& section : course->getSections()) {
+            auto sectionLeaf = pqTree.createLeaf(section->getId());
+            sectionsNode->addChild(sectionLeaf);
         }
     }
+    
+    // Layout the tree for visualization
+    pqTree.computeLayout();
+}
 
-    std::vector<std::string> elements;
-    for (const auto &slot : allTimeSlots)
-    {
-        std::stringstream ss;
-        ss << "ts_" << slot.day << "_" << slot.hour;
-        elements.push_back(ss.str());
+// Helper method to create actual schedules from the PQ tree layout
+void Scheduler::extractSchedulesFromPQTree() {
+    // For a simple implementation, we'll create a random number of schedules
+    // A real implementation would use more advanced algorithms
+    const int numSchedulesToGenerate = 5;
+    
+    for (int i = 0; i < numSchedulesToGenerate; ++i) {
+        // Create a new schedule
+        auto schedule = std::make_shared<Schedule>();
+        
+        // Apply some random reordering of the PQ tree
+        pqTree.reorder();
+        
+        // Now extract a schedule based on the tree's current state
+        // This is a simplified version; a real implementation would look at the tree's structure
+        // and determine the actual schedule from it
+        
+        // For each course, add one section to the schedule
+        for (const auto& course : courses) {
+            // Get all sections for this course
+            const auto& sections = course->getSections();
+            
+            if (!sections.empty()) {
+                // Just add a random section for now
+                std::random_device rd;
+                std::mt19937 g(rd());
+                std::uniform_int_distribution<size_t> dist(0, sections.size() - 1);
+                
+                size_t sectionIndex = dist(g);
+                schedule->addSection(sections[sectionIndex]);
+            }
+        }
+        
+        // If the schedule has no conflicts, add it to the possible schedules
+        if (!schedule->hasConflicts()) {
+            possibleSchedules.push_back(schedule);
+        }
     }
+}
 
-    scheduleTree.createFromUniversalSet(elements);
-    applyConstraints();
-
-    auto arrangements = scheduleTree.getPossibleArrangements();
-    if (arrangements.empty())
+// Helper method to find a schedule that satisfies all requirements
+bool Scheduler::findSatisfyingSchedule() {
+    // If no schedules were generated, return false
+    if (possibleSchedules.empty()) {
         return false;
-
-    std::random_device rd;
-    std::mt19937 generator(rd());
-    std::vector<std::shared_ptr<Section>> shuffledSections = sections;
-    std::shuffle(shuffledSections.begin(), shuffledSections.end(), generator);
-
-    for (auto &section : shuffledSections)
-    {
-        std::vector<std::shared_ptr<Teacher>> suitableTeachers;
-        for (auto &teacher : section->course->assignedTeachers)
-        {
-            bool preferred = false;
-            bool avoided = false;
-
-            for (const auto &pref : preferences)
-            {
-                if (pref.courseCode == section->course->code &&
-                    pref.teacherId == teacher->id)
-                {
-                    if (pref.type == StudentPreference::PREFER_TEACHER)
-                        preferred = true;
-                    else if (pref.type == StudentPreference::AVOID_TEACHER)
-                        avoided = true;
-                }
-            }
-
-            if (!avoided || preferred)
-                suitableTeachers.push_back(teacher);
-        }
-
-        if (suitableTeachers.empty() && !section->course->assignedTeachers.empty())
-        {
-            suitableTeachers = section->course->assignedTeachers;
-        }
-
-        if (suitableTeachers.empty())
-            continue;
-
-        std::shuffle(suitableTeachers.begin(), suitableTeachers.end(), generator);
-        bool assigned = false;
-
-        for (auto &teacher : suitableTeachers)
-        {
-            std::vector<TimeSlot> validSlots;
-            for (const auto &slot : teacher->availableTimeSlots)
-            {
-                bool preferred = false;
-                bool avoided = false;
-
-                for (const auto &pref : preferences)
-                {
-                    if (pref.courseCode == section->course->code)
-                    {
-                        if (pref.type == StudentPreference::PREFER_TIME_SLOT &&
-                            pref.timeSlot.day == slot.day &&
-                            pref.timeSlot.hour == slot.hour)
-                        {
-                            preferred = true;
-                        }
-                        else if (pref.type == StudentPreference::AVOID_TIME_SLOT &&
-                                 pref.timeSlot.day == slot.day &&
-                                 pref.timeSlot.hour == slot.hour)
-                        {
-                            avoided = true;
-                        }
-                    }
-                }
-
-                if (avoided && !preferred)
-                    continue;
-
-                bool conflict = false;
-                for (auto &otherSection : sections)
-                {
-                    if (otherSection->teacher == teacher)
-                    {
-                        for (const auto &otherSlot : otherSection->timeSlots)
-                        {
-                            if (slot.overlaps(otherSlot))
-                                conflict = true;
-                        }
-                    }
-                    if (conflict)
-                        break;
-                }
-
-                if (!conflict)
-                    validSlots.push_back(slot);
-            }
-
-            if (validSlots.empty())
-                continue;
-            std::shuffle(validSlots.begin(), validSlots.end(), generator);
-
-            for (const auto &slot : validSlots)
-            {
-                TimeSlot extendedSlot = slot;
-                bool valid = true;
-
-                for (int i = 1; i < section->course->creditHours; i++)
-                {
-                    extendedSlot.duration++;
-                    if (extendedSlot.hour + extendedSlot.duration > 18)
-                    {
-                        valid = false;
-                        break;
-                    }
-
-                    for (auto &otherSection : sections)
-                    {
-                        if (otherSection->teacher == teacher)
-                        {
-                            for (const auto &otherSlot : otherSection->timeSlots)
-                            {
-                                if (extendedSlot.overlaps(otherSlot))
-                                {
-                                    valid = false;
-                                    break;
-                                }
-                            }
-                        }
-                        if (!valid)
-                            break;
-                    }
-                    if (!valid)
-                        break;
-                }
-
-                if (valid)
-                {
-                    section->assignTeacher(teacher);
-                    section->addTimeSlot(extendedSlot);
-                    assigned = true;
-                    break;
-                }
-            }
-            if (assigned)
-                break;
-        }
     }
-    return validateSchedule();
-}
-
-bool ClassScheduler::validateSchedule() const
-{
-    for (const auto &section : sections)
-    {
-        if (!section->teacher || section->timeSlots.empty())
-            return false;
-
-        for (const auto &otherSection : sections)
-        {
-            if (section == otherSection)
-                continue;
-            if (section->teacher != otherSection->teacher)
-                continue;
-
-            for (const auto &slot : section->timeSlots)
-            {
-                for (const auto &otherSlot : otherSection->timeSlots)
-                {
-                    if (slot.overlaps(otherSlot))
-                        return false;
-                }
-            }
-        }
-    }
-    return true;
-}
-
-float ClassScheduler::evaluateSchedule() const
-{
-    if (!validateSchedule())
-        return 0.0f;
-
-    float totalScore = 0.0f;
-    float maxScore = 0.0f;
-
-    for (const auto &section : sections)
-    {
-        for (const auto &preference : preferences)
-        {
-            if (preference.courseCode != section->course->code)
-                continue;
-
-            maxScore += preference.weight;
-
-            switch (preference.type)
-            {
-            case StudentPreference::PREFER_TEACHER:
-                if (section->teacher && section->teacher->id == preference.teacherId)
-                {
-                    totalScore += preference.weight;
-                }
-                break;
-
-            case StudentPreference::AVOID_TEACHER:
-                if (!section->teacher || section->teacher->id != preference.teacherId)
-                {
-                    totalScore += preference.weight;
-                }
-                break;
-
-            case StudentPreference::PREFER_TIME_SLOT:
-                for (const auto &slot : section->timeSlots)
-                {
-                    if (slot.day == preference.timeSlot.day && slot.hour == preference.timeSlot.hour)
-                    {
-                        totalScore += preference.weight;
-                        break;
-                    }
-                }
-                break;
-
-            case StudentPreference::AVOID_TIME_SLOT:
-                bool conflict = false;
-                for (const auto &slot : section->timeSlots)
-                {
-                    if (slot.day == preference.timeSlot.day && slot.hour == preference.timeSlot.hour)
-                    {
-                        conflict = true;
-                        break;
-                    }
-                }
-                if (!conflict)
-                    totalScore += preference.weight;
+    
+    // Try to find a schedule that satisfies all requirements
+    for (const auto& schedule : possibleSchedules) {
+        bool satisfiesAll = true;
+        
+        for (const auto& requirement : requirements) {
+            if (!requirement->isSatisfied(*schedule)) {
+                satisfiesAll = false;
                 break;
             }
         }
-    }
-
-    return maxScore > 0.0f ? (totalScore / maxScore) : 1.0f;
-}
-
-void ClassScheduler::applyConstraints()
-{
-    for (const auto &course : courses)
-    {
-        if (course->creditHours <= 1)
-            continue;
-
-        for (int day = 0; day < 5; day++)
-        {
-            for (int hour = 8; hour <= 18 - course->creditHours; hour++)
-            {
-                std::set<std::string> slots;
-                for (int offset = 0; offset < course->creditHours; offset++)
-                {
-                    std::stringstream ss;
-                    ss << "ts_" << day << "_" << (hour + offset);
-                    slots.insert(ss.str());
-                }
-                if (scheduleTree.reduce(slots))
-                    return;
-            }
+        
+        if (satisfiesAll) {
+            currentSchedule = schedule;
+            return true;
         }
     }
-}
-
-std::vector<std::shared_ptr<Section>> ClassScheduler::getSchedule() const
-{
-    std::vector<std::shared_ptr<Section>> validSections;
-    for (const auto &section : sections)
-    {
-        if (section->teacher && !section->timeSlots.empty())
-        {
-            validSections.push_back(section);
-        }
+    
+    // If no schedule satisfies all requirements, just pick the first one
+    if (!possibleSchedules.empty()) {
+        currentSchedule = possibleSchedules[0];
     }
-    return validSections;
-}
+    
+    return false;
+} 
